@@ -228,7 +228,7 @@ class FontRegistry:
         if not candidates:
             candidates = try_family_aliases(family_lower, self._fonts)
 
-        # System default fallback
+        # System default fallback (per W3C CSS Level 4 spec)
         if not candidates:
             candidates = get_system_default_font(self._fonts, platform.system())
 

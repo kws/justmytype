@@ -69,7 +69,7 @@ class TestCLICommands:
         assert "Found:" in captured.out
 
     def test_cmd_find_not_found(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test find command when font doesn't exist."""
+        """Test find command when font doesn't exist (should fallback to system default)."""
 
         class Args:
             family = "NonExistentFont12345"
@@ -81,9 +81,9 @@ class TestCLICommands:
 
         args = Args()
         exit_code = cmd_find(args)
-        assert exit_code == 2  # Not found
+        assert exit_code == 0  # Should find system default font via fallback
         captured = capsys.readouterr()
-        assert "not found" in captured.err.lower()
+        assert "Found:" in captured.out  # Should show a font was found
 
     def test_cmd_find_json(self, capsys: pytest.CaptureFixture[str]) -> None:
         """Test find command with JSON output."""
@@ -132,7 +132,7 @@ class TestCLICommands:
         assert len(captured.out) > 0
 
     def test_cmd_info_not_found(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test info command when font doesn't exist."""
+        """Test info command when font doesn't exist (should fallback to system default)."""
 
         class Args:
             family = "NonExistentFont12345"
@@ -142,9 +142,9 @@ class TestCLICommands:
 
         args = Args()
         exit_code = cmd_info(args)
-        assert exit_code == 2  # Not found
+        assert exit_code == 0  # Should find system default font via fallback
         captured = capsys.readouterr()
-        assert "not found" in captured.err.lower()
+        assert len(captured.out) > 0  # Should show font information
 
     def test_cmd_info_all_variants(self, capsys: pytest.CaptureFixture[str]) -> None:
         """Test info command with --all-variants."""
@@ -244,12 +244,12 @@ class TestCLIMain:
     def test_main_find_command_not_found(
         self, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        """Test main with find command for non-existent font."""
+        """Test main with find command for non-existent font (should fallback to system default)."""
         original_argv = sys.argv
         try:
             sys.argv = ["justmytype", "find", "NonExistentFont12345"]
             exit_code = main()
-            assert exit_code == 2  # Not found
+            assert exit_code == 0  # Should find system default font via fallback
         finally:
             sys.argv = original_argv
 
