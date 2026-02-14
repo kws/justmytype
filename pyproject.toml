@@ -19,6 +19,11 @@ dev = [
     "mypy>=1.0.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/kws/justmytype"
+Repository = "https://github.com/kws/justmytype"
+Issues = "https://github.com/kws/justmytype/issues"
+
 [project.entry-points."fontpacks"]
 # Entry point group for font pack discovery
 # Example: "my-font-pack" = "my_font_pack:get_font_directories"
