@@ -98,4 +98,3 @@ def test_system_font_pack_implements_protocol() -> None:
     name = pack.get_name()
     assert isinstance(name, str)
     assert name == "system-fonts"
-

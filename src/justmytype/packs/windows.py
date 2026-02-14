@@ -27,9 +27,6 @@ class WindowsSystemFontPack(SystemFontPack):
         ]
 
         if localappdata:
-            directories.append(
-                Path(localappdata) / "Microsoft" / "Windows" / "Fonts"
-            )
+            directories.append(Path(localappdata) / "Microsoft" / "Windows" / "Fonts")
 
         return directories
-

@@ -5,8 +5,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from justmytype.types import FontPack
-
 
 class SystemFontPack(ABC):
     """Abstract base class for platform-specific system font packs.
@@ -43,4 +41,3 @@ class SystemFontPack(ABC):
             String identifier "system-fonts".
         """
         return "system-fonts"
-

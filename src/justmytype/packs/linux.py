@@ -33,4 +33,3 @@ class LinuxSystemFontPack(SystemFontPack):
             Path(xdg_data_home) / "fonts",  # User fonts (XDG Base Directory)
             Path("/run/host/fonts"),  # Flatpak/Snap sandbox fonts
         ]
-

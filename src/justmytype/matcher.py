@@ -177,4 +177,3 @@ def get_system_default_font(
             return available_families[fallback]
 
     return []
-

@@ -78,16 +78,16 @@ class SystemFontPack(ABC):
     Abstract base class for platform-specific system font packs.
     This implements the standard Font Pack protocol.
     """
-    
+
     @abstractmethod
     def get_font_directories(self) -> list[Path]:
         """Returns platform-specific system paths."""
         ...
-    
+
     def get_priority(self) -> int:
         """Returns the priority of this pack (0 = lowest)."""
         return 0
-    
+
     def get_name(self) -> str:
         """Returns the canonical name for this pack (used in blocklist)."""
         return "system-fonts"
@@ -95,7 +95,7 @@ class SystemFontPack(ABC):
 
 class DarwinSystemFontPack(SystemFontPack):
     """System font pack for macOS."""
-    
+
     def get_font_directories(self) -> list[Path]:
         return [
             Path("/System/Library/Fonts"),      # System fonts
@@ -106,7 +106,7 @@ class DarwinSystemFontPack(SystemFontPack):
 
 class WindowsSystemFontPack(SystemFontPack):
     """System font pack for Windows."""
-    
+
     def get_font_directories(self) -> list[Path]:
         return [
             Path(os.environ.get("WINDIR", "C:\\Windows")) / "Fonts",
@@ -116,7 +116,7 @@ class WindowsSystemFontPack(SystemFontPack):
 
 class LinuxSystemFontPack(SystemFontPack):
     """System font pack for Linux."""
-    
+
     def get_font_directories(self) -> list[Path]:
         return [
             Path.home() / ".fonts",                          # Legacy user fonts
@@ -210,23 +210,23 @@ All font sources, including the internal System Font scanner, must implement the
 ```python
 class FontPack(Protocol):
     """Protocol that all font sources must implement."""
-    
+
     def get_font_directories(self) -> list[Path]:
         """Return list of directories containing font files."""
         ...
-    
+
     def get_priority(self) -> int:
         """Return priority for this pack (higher = processed first, overrides lower priority).
-        
+
         Standard priorities:
         - User Font Packs: 100
         - System Font Pack: 0
         """
         ...
-    
+
     def get_name(self) -> str:
         """Return canonical name for this pack (used in blocklist).
-        
+
         Must be unique and stable. System pack uses "system-fonts".
         """
         ...
@@ -291,10 +291,10 @@ def get_font_directories():
     # Option 1: Return Path objects
     package = files("my_font_pack.fonts")
     return [Path(str(package))]
-    
+
     # Option 2: Return string paths
     # return [str(Path(__file__).parent / "fonts")]
-    
+
     # Option 3: Return multiple directories
     # return [
     #     Path(str(files("my_font_pack.fonts"))),
@@ -314,11 +314,11 @@ def get_font_directories():
 ```python
 def get_font_pack_directories() -> list[tuple[Path, int, str]]:
     """Get font pack directories from entry points.
-    
+
     Returns list of (directory, priority, name) tuples.
     """
     packs: list[tuple[Path, int, str]] = []
-    
+
     try:
         from importlib.metadata import entry_points
         eps = entry_points(group="fontpacks")
@@ -329,17 +329,17 @@ def get_font_pack_directories() -> list[tuple[Path, int, str]]:
             eps = importlib_metadata.entry_points(group="fontpacks")
         except ImportError:
             return packs
-    
+
     for ep in eps:
         try:
             factory = ep.load()
             pack = factory()  # Should return FontPack instance
-            
+
             # Get directories, priority, and name
             dirs = pack.get_font_directories()
             priority = pack.get_priority() if hasattr(pack, 'get_priority') else 100
             name = pack.get_name() if hasattr(pack, 'get_name') else ep.name
-            
+
             for dir_path in dirs:
                 path = Path(dir_path) if isinstance(dir_path, str) else dir_path
                 if path.exists():
@@ -347,7 +347,7 @@ def get_font_pack_directories() -> list[tuple[Path, int, str]]:
         except Exception:
             # Skip invalid entry points
             continue
-    
+
     return packs
 ```
 
@@ -371,7 +371,7 @@ Font metadata (family name, weight, style) must be extracted from font files to 
 @dataclass(frozen=True, slots=True)
 class FontInfo:
     """Information about a discovered font."""
-    
+
     path: Path                    # Path to font file
     family: str                   # Font family name
     weight: int | None = None     # Font weight (100-900, None if unknown)
@@ -392,23 +392,23 @@ def parse_font_file(path: Path) -> FontInfo | None:
     """Parse font file using fonttools."""
     try:
         font = TTFont(str(path))
-        
+
         # Extract family name from name table
         name_table = font.get("name")
         family = name_table.getDebugName(1)  # Family name
-        
+
         # Extract PostScript name (name ID 6)
         postscript_name = name_table.getDebugName(6)
-        
+
         # Extract weight from OS/2 table
         os2 = font.get("OS/2")
         weight = os2.usWeightClass if os2 else None
-        
+
         # Extract style from name table or OS/2
         style = "normal"
         if os2 and os2.fsSelection & 0x01:  # Italic bit
             style = "italic"
-        
+
         # Extract width/stretch from OS/2 table
         width = None
         if os2:
@@ -419,7 +419,7 @@ def parse_font_file(path: Path) -> FontInfo | None:
                 7: "expanded", 8: "extra-expanded", 9: "ultra-expanded"
             }
             width = width_map.get(os2.usWidthClass, "normal")
-        
+
         return FontInfo(
             path=path,
             family=family,
@@ -444,23 +444,23 @@ def parse_filename(path: Path) -> tuple[int | None, str]:
     stem = path.stem.lower()
     weight: int | None = None
     style = "normal"
-    
+
     # Weight mapping
     weight_map = {
         "thin": 100, "extralight": 200, "light": 300,
         "regular": 400, "normal": 400, "medium": 500,
         "semibold": 600, "bold": 700, "extrabold": 800, "black": 900,
     }
-    
+
     for keyword, w in weight_map.items():
         if keyword in stem:
             weight = w
             break
-    
+
     # Style detection
     if "italic" in stem or "oblique" in stem:
         style = "italic"
-    
+
     return weight, style
 ```
 
@@ -505,36 +505,36 @@ def find_font(
     width: str | None = None,
 ) -> FontInfo | None:
     """Find a font by family, weight, style, and width.
-    
+
     Returns FontInfo object containing the font path and metadata.
     Use load_font() or FontInfo.load() to load as PIL ImageFont if needed.
     """
     self.discover()
-    
+
     # Step 1: Family matching with aliases
     family_lower = family.lower()
     candidates = self._fonts.get(family_lower, [])
-    
+
     # Try aliases if no direct match
     if not candidates:
         candidates = self._try_family_aliases(family_lower)
-    
+
     # System default fallback
     if not candidates:
         candidates = self._get_system_default_font()
-    
+
     if not candidates:
         return None
-    
+
     # Step 2-4: Calculate Manhattan Distance for hierarchical matching
     best: FontInfo | None = None
     best_distance = float('inf')
-    
+
     # Width order for distance calculation
     width_order = ["ultra-condensed", "extra-condensed", "condensed",
                    "semi-condensed", "normal", "semi-expanded",
                    "expanded", "extra-expanded", "ultra-expanded"]
-    
+
     for candidate in candidates:
         distance = self._calculate_distance(
             target_weight=weight,
@@ -543,14 +543,14 @@ def find_font(
             candidate=candidate,
             width_order=width_order
         )
-        
+
         if distance < best_distance:
             best_distance = distance
             best = candidate
-    
+
     if best is None:
         best = candidates[0]  # Fallback to first candidate
-    
+
     # Load and return font
     try:
         return ImageFont.truetype(str(best.path), size=size)
@@ -566,7 +566,7 @@ def _calculate_distance(
     width_order: list[str],
 ) -> float:
     """Calculate Manhattan Distance with hierarchy: Stretch > Style > Weight."""
-    
+
     # Stretch/Width distance (highest priority: 1000x multiplier)
     stretch_dist = 0
     if target_width is not None and candidate.width is not None:
@@ -578,7 +578,7 @@ def _calculate_distance(
             stretch_dist = 5  # Unknown width = maximum distance
     elif target_width is not None or candidate.width is not None:
         stretch_dist = 5  # Mismatch (one specified, one not)
-    
+
     # Style distance (medium priority: 100x multiplier)
     # Prefer italic > oblique > normal when italic requested
     # Prefer normal > oblique > italic when normal requested
@@ -599,7 +599,7 @@ def _calculate_distance(
             style_dist = 2
     else:  # oblique or unknown
         style_dist = 0 if candidate.style == target_style else 1
-    
+
     # Weight distance (lowest priority: 1x multiplier)
     # Apply CSS fallback rules for weight matching
     weight_dist = 0
@@ -635,7 +635,7 @@ def _calculate_distance(
         weight_dist = min(weight_dist, 800)
     elif target_weight is not None or candidate.weight is not None:
         weight_dist = 400  # Mismatch penalty
-    
+
     # Enforce hierarchy: Stretch > Style > Weight
     return (stretch_dist * 1000) + (style_dist * 100) + (weight_dist * 1)
 ```
@@ -711,38 +711,38 @@ class FontRegistry:
         self._cache: dict[tuple[str, int, int | None, str, str | None], Path] = {}
         self._discovered = False
         self._blocklist = self._parse_blocklist(blocklist)
-    
+
     def _parse_blocklist(self, blocklist: set[str] | None) -> set[str]:
         """Parse blocklist from constructor and environment variable."""
         result = set(blocklist) if blocklist else set()
-        
+
         # Merge with environment variable
         env_blocklist = os.environ.get("FONT_DISCOVERY_BLOCKLIST", "")
         if env_blocklist:
             result.update(name.strip() for name in env_blocklist.split(",") if name.strip())
-        
+
         return result
-    
+
     def discover(self) -> None:
         """Discover fonts with priority: High-priority packs first, then low-priority packs."""
         if self._discovered:
             return
-        
+
         # Collect all packs with their priorities
         packs: list[tuple[list[Path], int, str]] = []
-        
+
         # 1. Load System Font Pack (unless blocked)
         if "system-fonts" not in self._blocklist:
             system_pack = create_system_font_pack()
             system_dirs = system_pack.get_font_directories()
             packs.append((system_dirs, system_pack.get_priority(), system_pack.get_name()))
-        
+
         # 2. Load External Packs via EntryPoints
         for ep in self._get_entry_points():
             pack_name = ep.name
             if pack_name in self._blocklist:
                 continue  # Skip blocked packs
-            
+
             try:
                 factory = ep.load()
                 pack = factory()
@@ -751,24 +751,24 @@ class FontRegistry:
                 packs.append((dirs, priority, pack.get_name() if hasattr(pack, 'get_name') else pack_name))
             except Exception:
                 continue
-        
+
         # Sort packs by priority (highest first)
         packs.sort(key=lambda x: x[1], reverse=True)
-        
+
         # Process packs in priority order
         for dirs, priority, pack_name in packs:
             for dir_path in dirs:
                 self._scan_directory(dir_path, priority=priority, pack_name=pack_name)
-        
+
         self._discovered = True
-    
+
     def _scan_directory(self, dir_path: Path, priority: int, pack_name: str) -> None:
         """Scan directory and add fonts, respecting priority."""
         for font_file in self._find_font_files(dir_path):
             font_info = parse_font_file(font_file)
             if font_info:
                 family_lower = font_info.family.lower()
-                
+
                 # Check if we should override existing font from lower-priority pack
                 should_add = True
                 if family_lower in self._fonts:
@@ -785,7 +785,7 @@ class FontRegistry:
                             f for f in self._fonts[family_lower]
                             if self._font_pack_priorities.get(f.path, -1) >= priority
                         ]
-                
+
                 if should_add:
                     if family_lower not in self._fonts:
                         self._fonts[family_lower] = []
@@ -803,11 +803,11 @@ class FontRegistry:
 ```python
 class FontRegistry:
     """Registry for discovering and resolving fonts."""
-    
+
     def discover(self) -> None:
         """Discover fonts from all registered packs (high-priority first)."""
         ...
-    
+
     def find_font(
         self,
         family: str,
@@ -816,28 +816,28 @@ class FontRegistry:
         width: str | None = None,
     ) -> FontInfo | None:
         """Find a font by family, weight, style, and width.
-        
+
         Returns FontInfo object containing the font path and metadata.
         Use load_font() or FontInfo.load() to load as PIL ImageFont if needed.
         """
         ...
-    
+
     def load_font(
         self,
         font_info: FontInfo,
         size: int,
     ) -> ImageFont.FreeTypeFont | None:
         """Load a FontInfo object as a PIL ImageFont.
-        
+
         This method imports PIL only when called, keeping JustMyType
         decoupled from Pillow for users who don't need it.
         """
         ...
-    
+
     def list_families(self) -> Iterator[str]:
         """List all discovered font families."""
         ...
-    
+
     def get_font_path(
         self,
         family: str,
@@ -862,10 +862,10 @@ class FontInfo:
     width: str | None = None
     postscript_name: str | None = None
     variant: str | None = None
-    
+
     def load(self, size: int) -> ImageFont.FreeTypeFont | None:
         """Load this font as a PIL ImageFont.
-        
+
         This method imports PIL only when called, keeping JustMyType
         decoupled from Pillow for users who don't need it.
         """
@@ -902,23 +902,23 @@ For applications that need to serialize font references:
 @dataclass(frozen=True, slots=True, kw_only=True)
 class FontRef:
     """Font reference that resolves via font registry."""
-    
+
     family: str
     size: int
     weight: int | None = None
     style: str = "normal"
-    
+
     def to_font_info(
         self, registry: FontRegistry | None = None
     ) -> FontInfo | None:
         """Resolve this font reference to a FontInfo object."""
         ...
-    
+
     def to_image_font(
         self, registry: FontRegistry | None = None
     ) -> ImageFont.FreeTypeFont | None:
         """Resolve this font reference to a PIL ImageFont.
-        
+
         Deprecated: Use to_font_info() and FontInfo.load() instead.
         """
         ...
@@ -1187,4 +1187,3 @@ def get_font_directories():
 - Required dependencies: fonttools (font metadata), PIL/Pillow (font loading)
 - Font Packs override System Fonts for application consistency
 - Designed for standalone project extraction
-

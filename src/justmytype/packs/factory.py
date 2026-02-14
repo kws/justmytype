@@ -29,4 +29,3 @@ def create_system_font_pack() -> SystemFontPack:
         return LinuxSystemFontPack()
     else:
         raise NotImplementedError(f"Unsupported platform: {system}")
-

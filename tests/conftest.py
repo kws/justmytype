@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
 
 import pytest
 
 from justmytype.core import FontRegistry
-from justmytype.types import FontInfo, FontPack
+from justmytype.types import FontInfo
 
 
 @pytest.fixture
@@ -92,4 +92,3 @@ def create_test_font_info(
         postscript_name=f"{family.replace(' ', '')}-{style.title()}",
         variant="Regular",
     )
-

@@ -24,4 +24,3 @@ class DarwinSystemFontPack(SystemFontPack):
             Path("/Library/Fonts"),  # System-wide fonts
             Path.home() / "Library" / "Fonts",  # User fonts
         ]
-

@@ -1,13 +1,13 @@
 # AGENTS.md: Developer Directives & Project Philosophy
 
-**Project:** JustMyType  
-**Package Name:** `justmytype`  
+**Project:** JustMyType
+**Package Name:** `justmytype`
 **Role:** Cross-platform Font Discovery & Resolution Library
 
 ---
 
 ## 1. Mission Statement
-You are building **JustMyType**, a precise, lightweight, and extensible font discovery library for Python. 
+You are building **JustMyType**, a precise, lightweight, and extensible font discovery library for Python.
 
 **The Goal:** To provide a robust "Font Atlas" for the Python ecosystem—a definitive map of every font available to an application, whether installed on the system or bundled in a Python package.
 
@@ -80,8 +80,7 @@ Do not write a monolithic `SystemFontPack` with `if/else` chains.
 ---
 
 ## 5. Developer Persona
-You are an **Infrastructure Architect**. 
+You are an **Infrastructure Architect**.
 You care about edge cases, thread safety, and standardized behavior. You are suspicious of "magic" and prefer explicit, deterministic logic. You write code that survives in messy, real-world environments (e.g., corporate laptops with restricted permissions, CI/CD pipelines, broken font files).
 
 **Next Step:** Read `docs/architecture.md` for the exact API signatures and algorithms, then begin scaffolding the `FontPack` protocol.
-

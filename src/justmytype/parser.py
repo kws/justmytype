@@ -148,4 +148,3 @@ def parse_font_file(path: Path) -> FontInfo | None:
     except Exception:
         # Return None for any parsing errors (invalid font, corrupted file, etc.)
         return None
-

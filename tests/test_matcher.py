@@ -2,8 +2,6 @@
 
 from pathlib import Path
 
-import pytest
-
 from justmytype.matcher import (
     calculate_distance,
     get_system_default_font,
@@ -216,9 +214,7 @@ def test_try_family_aliases() -> None:
         "liberation sans": [
             FontInfo(path=Path("/test/liberation.ttf"), family="Liberation Sans")
         ],
-        "dejavu sans": [
-            FontInfo(path=Path("/test/dejavu.ttf"), family="DejaVu Sans")
-        ],
+        "dejavu sans": [FontInfo(path=Path("/test/dejavu.ttf"), family="DejaVu Sans")],
     }
 
     # Arial should match Liberation Sans
@@ -230,9 +226,7 @@ def test_try_family_aliases() -> None:
 def test_try_family_aliases_no_match() -> None:
     """Test family alias matching with no matches."""
     available_families = {
-        "other font": [
-            FontInfo(path=Path("/test/other.ttf"), family="Other Font")
-        ],
+        "other font": [FontInfo(path=Path("/test/other.ttf"), family="Other Font")],
     }
 
     result = try_family_aliases("arial", available_families)
@@ -242,9 +236,7 @@ def test_try_family_aliases_no_match() -> None:
 def test_get_system_default_font() -> None:
     """Test getting system default font."""
     available_families = {
-        "dejavu sans": [
-            FontInfo(path=Path("/test/dejavu.ttf"), family="DejaVu Sans")
-        ],
+        "dejavu sans": [FontInfo(path=Path("/test/dejavu.ttf"), family="DejaVu Sans")],
     }
 
     result = get_system_default_font(available_families, "Linux")
@@ -263,4 +255,3 @@ def test_get_system_default_font_fallback() -> None:
     result = get_system_default_font(available_families, "Linux")
     # Should fall back to Liberation Sans
     assert len(result) > 0
-

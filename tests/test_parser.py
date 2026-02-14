@@ -2,8 +2,6 @@
 
 from pathlib import Path
 
-import pytest
-
 from justmytype.parser import find_font_files, parse_font_file
 
 
@@ -94,4 +92,3 @@ def test_parse_font_file_empty_file(temp_dir: Path) -> None:
     result = parse_font_file(empty_file)
     # Should return None for empty/invalid fonts
     assert result is None
-

@@ -94,4 +94,3 @@ class FontInfo:
             ) from e
         except Exception:
             return None
-

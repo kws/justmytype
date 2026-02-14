@@ -36,7 +36,7 @@ font_info = registry.find_font("Arial", weight=700, style="normal")
 if font_info:
     # Load as PIL ImageFont (requires Pillow)
     font = font_info.load(size=16)
-    
+
     # Or use the path directly
     print(f"Found font at: {font_info.path}")
 ```
@@ -76,7 +76,7 @@ font_info = registry.find_font("Arial", weight=700)
 if font_info:
     # Load as PIL ImageFont
     font = font_info.load(size=24)
-    
+
     # Use with PIL
     img = Image.new("RGB", (200, 100), "white")
     draw = ImageDraw.Draw(img)
@@ -190,4 +190,3 @@ MIT License - see LICENSE file for details.
 ## Contributing
 
 Contributions are welcome! Please read the architecture documentation in `docs/architecture.md` and follow the project philosophy outlined in `AGENTS.md`.
-

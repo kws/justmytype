@@ -13,4 +13,3 @@ __all__ = [
     "create_system_font_pack",
     "get_default_registry",
 ]
-

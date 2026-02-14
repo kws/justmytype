@@ -13,8 +13,8 @@ from justmytype.matcher import (
     get_system_default_font,
     try_family_aliases,
 )
-from justmytype.parser import find_font_files, parse_font_file
 from justmytype.packs.factory import create_system_font_pack
+from justmytype.parser import find_font_files, parse_font_file
 from justmytype.types import FontInfo, FontPack
 
 if TYPE_CHECKING:
@@ -45,9 +45,7 @@ class FontRegistry:
         self._discovered = False
         self._blocklist = self._parse_blocklist(blocklist)
 
-    def _parse_blocklist(
-        self, blocklist: set[str] | None
-    ) -> set[str]:
+    def _parse_blocklist(self, blocklist: set[str] | None) -> set[str]:
         """Parse blocklist from constructor and environment variable.
 
         Args:
@@ -155,9 +153,7 @@ class FontRegistry:
 
         self._discovered = True
 
-    def _scan_directory(
-        self, dir_path: Path, priority: int, pack_name: str
-    ) -> None:
+    def _scan_directory(self, dir_path: Path, priority: int, pack_name: str) -> None:
         """Scan directory and add fonts, respecting priority.
 
         Args:
@@ -335,4 +331,3 @@ def get_default_registry() -> FontRegistry:
     if _default_registry is None:
         _default_registry = FontRegistry()
     return _default_registry
-
