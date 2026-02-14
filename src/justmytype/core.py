@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import os
-import platform
 from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from justmytype.matcher import (
     calculate_distance,
-    get_system_default_font,
     try_family_aliases,
 )
 from justmytype.packs.factory import create_system_font_pack
@@ -204,9 +202,9 @@ class FontRegistry:
     ) -> FontInfo | None:
         """Find a font by family, weight, style, and width.
 
-        Implements W3C CSS Fonts Level 4 matching algorithm with intelligent
-        fallback. Returns the best matching font based on Manhattan Distance
-        calculation (Family > Width > Style > Weight).
+        Implements W3C CSS Fonts Level 4 matching algorithm. Returns the best
+        matching font based on Manhattan Distance calculation (Family > Width >
+        Style > Weight).
 
         Args:
             family: Font family name (case-insensitive).
@@ -216,7 +214,8 @@ class FontRegistry:
 
         Returns:
             FontInfo object containing the font path and metadata, or None
-            if no matching font is found.
+            if no matching font is found. No automatic fallback to system
+            default fonts - the caller should handle fallback logic.
         """
         self.discover()
 
@@ -228,10 +227,7 @@ class FontRegistry:
         if not candidates:
             candidates = try_family_aliases(family_lower, self._fonts)
 
-        # System default fallback (per W3C CSS Level 4 spec)
-        if not candidates:
-            candidates = get_system_default_font(self._fonts, platform.system())
-
+        # If no candidates found, return None (no automatic fallback)
         if not candidates:
             return None
 

@@ -483,7 +483,7 @@ When `find_font(family, weight, style, width)` is called, the library filters th
 1. **Family Match:**
    - Exact case-insensitive match of the specific family name (e.g., "Open Sans").
    - *If no match:* Check widely known aliases (e.g., "Arial" -> "Liberation Sans" on Linux).
-   - *If still no match:* Fall back to the system default font (e.g., San Francisco on macOS, Segoe UI on Windows).
+   - *If still no match:* Return `None` (no fallback - caller handles fallback logic).
 
 2. **Stretch Match (Width):**
    - Filter available faces to the closest stretch (e.g., if "condensed" is requested, prefer "semi-condensed" over "expanded").
@@ -527,10 +527,7 @@ def find_font(
     if not candidates:
         candidates = self._try_family_aliases(family_lower)
 
-    # System default fallback
-    if not candidates:
-        candidates = self._get_system_default_font()
-
+    # If no candidates found, return None (no automatic fallback)
     if not candidates:
         return None
 
@@ -654,7 +651,7 @@ def _calculate_distance(
 
 The matching hierarchy (Section 6.1) defines the fallback behavior:
 
-1. **Family Fallback**: If no exact family match, try aliases, then system default font
+1. **Family Fallback**: If no exact family match, try aliases. If still no match, return `None` (no automatic system default fallback - this is a library API, not a rendering engine).
 2. **Attribute Fallback**: Within the matched family, the distance calculation automatically handles:
    - Stretch: Closest width variant
    - Style: Prefers italic > oblique > normal (or reverse for normal requests)
