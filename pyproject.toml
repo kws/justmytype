@@ -8,6 +8,9 @@ authors = [
 license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.10"
+dependencies = [
+    "fonttools>=4.0.0",
+]
 
 [project.optional-dependencies]
 pillow = ["Pillow>=9.0.0"]
@@ -17,6 +20,7 @@ dev = [
     "coverage>=7.0.0",
     "ruff>=0.1.0",
     "mypy>=1.0.0",
+    "pre-commit>=3.0.0",
 ]
 
 [project.urls]
@@ -34,19 +38,8 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 # Poetry configuration for PEP 621 compatibility
-# All project metadata is defined in [project] above
-
-[tool.poetry.dependencies]
-python = ">=3.10"
-fonttools = ">=4.0.0"
-
-[tool.poetry.group.dev.dependencies]
-pytest = ">=7.0.0"
-pytest-cov = ">=4.0.0"
-coverage = ">=7.0.0"
-ruff = ">=0.1.0"
-mypy = ">=1.0.0"
-pre-commit = ">=3.0.0"
+# All project metadata and dependencies are defined in [project] sections above
+# Poetry reads from [project] sections automatically
 
 [tool.ruff]
 line-length = 88
