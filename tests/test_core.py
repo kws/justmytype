@@ -1,13 +1,11 @@
 """Tests for FontRegistry core functionality."""
 
-import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from justmytype.core import FontRegistry, get_default_registry
-from justmytype.types import FontInfo
 from tests.conftest import MockFontPack, create_test_font_info
 
 
@@ -81,7 +79,9 @@ def test_font_registry_list_families_triggers_discovery(
     assert empty_font_registry._discovered is True
 
 
-def test_font_registry_with_mock_pack(temp_dir: Path, font_registry: FontRegistry) -> None:
+def test_font_registry_with_mock_pack(
+    temp_dir: Path, font_registry: FontRegistry
+) -> None:
     """Test FontRegistry with mock font pack."""
     # Create a test font file (we'll use a simple text file for testing)
     # In real tests, we'd use actual font files or mock the parser
@@ -143,7 +143,9 @@ def test_font_registry_priority_override(
             )
             mock_find.return_value = [font_file2]
 
-            high_priority_pack = MockFontPack([temp_dir], priority=100, name="high-pack")
+            high_priority_pack = MockFontPack(
+                [temp_dir], priority=100, name="high-pack"
+            )
 
             with patch.object(
                 font_registry,
@@ -156,8 +158,9 @@ def test_font_registry_priority_override(
                 font_registry.discover()
 
                 # Should have high priority font
-                font = font_registry.find_font("Test Font")
+                font_info = font_registry.find_font("Test Font")
                 # The exact result depends on implementation, but should prioritize correctly
+                assert font_info is not None
 
 
 def test_font_registry_find_font_not_found(
@@ -204,4 +207,3 @@ def test_font_registry_blocklist_system_fonts() -> None:
 
     # System fonts should be blocked, but discovery should still work
     assert registry._discovered is True
-

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from justmytype.types import FontInfo, FontPack
+from justmytype.types import FontInfo
 
 
 def test_font_info_creation() -> None:
@@ -39,10 +39,12 @@ def test_font_info_defaults() -> None:
 
 def test_font_info_frozen() -> None:
     """Test that FontInfo is frozen (immutable)."""
+    from dataclasses import FrozenInstanceError
+
     path = Path("/test/font.ttf")
     font_info = FontInfo(path=path, family="Test Font")
 
-    with pytest.raises(Exception):  # dataclass.FrozenInstanceError
+    with pytest.raises(FrozenInstanceError):
         font_info.family = "New Name"  # type: ignore[misc]
 
 
@@ -83,4 +85,3 @@ def test_font_pack_protocol() -> None:
     assert pack.get_font_directories() == [Path("/test/fonts")]
     assert pack.get_priority() == 100
     assert pack.get_name() == "test-pack"
-
