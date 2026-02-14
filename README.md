@@ -94,6 +94,71 @@ registry = FontRegistry(blocklist={"system-fonts"})
 # FONT_DISCOVERY_BLOCKLIST="system-fonts,broken-pack" python app.py
 ```
 
+## Command-Line Interface
+
+JustMyType includes a CLI for discovering and inspecting fonts from the command line.
+
+### List All Fonts
+
+```bash
+# List all available font families
+justmytype list
+
+# Sort by number of variants
+justmytype list --sort count
+
+# Output as JSON
+justmytype list --json
+```
+
+### Find a Font
+
+```bash
+# Find a font by family name
+justmytype find "Roboto"
+
+# Find with specific weight and style
+justmytype find "Roboto" --weight 400 --style normal
+justmytype find "Inter" --weight 700 --style italic
+
+# Output as JSON
+justmytype find "Roboto" --json
+```
+
+### Show Font Information
+
+```bash
+# Show information about a font family
+justmytype info "Roboto"
+
+# Show all variants of a font
+justmytype info "Roboto" --all-variants
+
+# Output as JSON
+justmytype info "Roboto" --json
+```
+
+### List Font Packs
+
+```bash
+# List registered font packs
+justmytype packs
+
+# Show detailed pack information
+justmytype packs --verbose
+
+# Output as JSON
+justmytype packs --json
+```
+
+### Blocking Font Packs (CLI)
+
+```bash
+# Block specific font packs
+justmytype list --blocklist "system-fonts"
+justmytype find "Roboto" --blocklist "system-fonts,broken-pack"
+```
+
 ## Creating Font Packs
 
 Font packs can be registered via Python EntryPoints. This allows applications to bundle fonts or third-party packages to provide fonts.
