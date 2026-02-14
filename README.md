@@ -178,7 +178,7 @@ def get_font_directories():
 
 ```toml
 # pyproject.toml
-[project.entry-points."fontpacks"]
+[project.entry-points."justmytype.packs"]
 "myapp-fonts" = "myapp.fonts:get_font_directories"
 ```
 
@@ -255,3 +255,4 @@ MIT License - see LICENSE file for details.
 ## Contributing
 
 Contributions are welcome! Please read the architecture documentation in `docs/architecture.md` and follow the project philosophy outlined in `AGENTS.md`.
+

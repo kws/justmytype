@@ -74,13 +74,13 @@ class FontRegistry:
         try:
             from importlib.metadata import entry_points
 
-            eps = entry_points(group="fontpacks")
+            eps = entry_points(group="justmytype.packs")
         except ImportError:
             # Python < 3.10 fallback
             try:
                 import importlib_metadata
 
-                eps = importlib_metadata.entry_points(group="fontpacks")
+                eps = importlib_metadata.entry_points(group="justmytype.packs")
             except ImportError:
                 return
 

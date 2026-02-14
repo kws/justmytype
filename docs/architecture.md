@@ -236,7 +236,7 @@ class FontPack(Protocol):
 
 Font packs register themselves using the EntryPoints mechanism defined in PEP 621 and implemented by `importlib.metadata` (Python 3.8+) or `importlib_metadata` (backport).
 
-**Entry Point Group**: `fontpacks` (or project-specific like `myproject.fontpacks`)
+**Entry Point Group**: `justmytype.packs`
 
 **Entry Point Format**: Factory function that returns font directory paths
 
@@ -249,7 +249,7 @@ A font pack (whether first-party or third-party) should define an entry point in
 setup(
     name="my-font-pack",
     entry_points={
-        "fontpacks": [
+        "justmytype.packs": [
             "my-font-pack = my_font_pack:get_font_directories",
         ],
     },
@@ -258,7 +258,7 @@ setup(
 
 **pyproject.toml**:
 ```toml
-[project.entry-points."fontpacks"]
+[project.entry-points."justmytype.packs"]
 "my-font-pack" = "my_font_pack:get_font_directories"
 ```
 
@@ -305,7 +305,7 @@ def get_font_directories():
 **Example: Application registering its own fonts in pyproject.toml**
 
 ```toml
-[project.entry-points."fontpacks"]
+[project.entry-points."justmytype.packs"]
 "myapp-fonts" = "myapp:get_font_directories"
 ```
 
@@ -321,12 +321,12 @@ def get_font_pack_directories() -> list[tuple[Path, int, str]]:
 
     try:
         from importlib.metadata import entry_points
-        eps = entry_points(group="fontpacks")
+        eps = entry_points(group="justmytype.packs")
     except ImportError:
         # Python < 3.10 fallback
         try:
             import importlib_metadata
-            eps = importlib_metadata.entry_points(group="fontpacks")
+            eps = importlib_metadata.entry_points(group="justmytype.packs")
         except ImportError:
             return packs
 
@@ -1149,7 +1149,7 @@ def get_font_directories():
     return [Path(str(package))]
 
 # pyproject.toml
-# [project.entry-points."fontpacks"]
+# [project.entry-points."justmytype.packs"]
 # "myapp-fonts" = "myapp.fonts:get_font_directories"
 ```
 
@@ -1166,7 +1166,7 @@ def get_font_directories():
     return [Path(str(package))]
 
 # pyproject.toml
-# [project.entry-points."fontpacks"]
+# [project.entry-points."justmytype.packs"]
 # "my-font-pack" = "my_font_pack:get_font_directories"
 ```
 

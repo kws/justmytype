@@ -31,7 +31,7 @@ Issues = "https://github.com/kws/justmytype/issues"
 [project.scripts]
 justmytype = "justmytype.cli:main"
 
-[project.entry-points."fontpacks"]
+[project.entry-points."justmytype.packs"]
 # Entry point group for font pack discovery
 # Example: "my-font-pack" = "my_font_pack:get_font_directories"
 
