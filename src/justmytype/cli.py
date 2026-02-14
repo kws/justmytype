@@ -246,7 +246,7 @@ def cmd_packs(args: argparse.Namespace) -> int:
         except ImportError:
             entry_points = lambda group: []  # noqa: E731
 
-    eps = entry_points(group="fontpacks")
+    eps = entry_points(group="justmytype.packs")
     for ep in eps:
         try:
             factory = ep.load()
@@ -365,7 +365,12 @@ def main() -> int:
         help="Show detailed pack information",
     )
 
-    args = parser.parse_args()
+    try:
+        args = parser.parse_args()
+    except SystemExit:
+        # argparse raises SystemExit(2) for invalid commands/arguments
+        # Return 1 for invalid commands to match expected behavior
+        return 1
 
     # Parse blocklist
     blocklist: set[str] | None = None
