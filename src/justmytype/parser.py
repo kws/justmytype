@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -108,7 +109,25 @@ def parse_font_file(path: Path) -> FontInfo | None:
         if name_table is None:
             return None
 
-        family = name_table.getDebugName(1)  # Family name
+        # Check if this is a variable font (has 'fvar' table)
+        is_variable_font = font.get("fvar") is not None
+
+        # For variable fonts, prefer nameID 16 (Typographic Family Name)
+        # which contains the base family name without optical size suffixes
+        if is_variable_font:
+            # Try nameID 16 first (Typographic Family Name)
+            family = name_table.getDebugName(16)
+            if not family:
+                # Fallback to nameID 1 and strip optical size patterns
+                family = name_table.getDebugName(1)
+                if family:
+                    # Strip optical size patterns (e.g., " 9pt", " 10pt", " 12.5pt")
+                    # Pattern matches: optional whitespace, digits, optional decimal, "pt", optional trailing whitespace
+                    family = re.sub(r"\s+\d+(\.\d+)?pt\s*$", "", family).strip()
+        else:
+            # For non-variable fonts, use nameID 1 as before
+            family = name_table.getDebugName(1)
+
         if not family:
             return None
 

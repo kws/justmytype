@@ -432,6 +432,14 @@ def parse_font_file(path: Path) -> FontInfo | None:
         return None
 ```
 
+#### Variable Font Handling
+
+For variable fonts (fonts with an 'fvar' table), the family name extraction follows W3C conventions:
+
+- **Preferred**: Use nameID 16 (Typographic Family Name) which contains the base family name without optical size suffixes
+- **Fallback**: If nameID 16 is unavailable, strip optical size patterns (e.g., " 9pt", " 10pt") from nameID 1 using regex pattern `\s+\d+(\.\d+)?pt\s*$`
+- **Rationale**: Variable fonts should be registered under their base family name (e.g., "DM Sans") not with optical size suffixes (e.g., "DM Sans 9pt"), matching browser behavior where `font-family: "DM Sans"` matches the variable font file.
+
 ### 5.4 Filename-Based Heuristics (Experimental/Unreliable)
 
 **Warning**: Filename-based parsing is unreliable and should only be used as a last resort when fonttools is unavailable. This method fails ~30% of the time and cannot distinguish between font families and width variants (e.g., "Arial Narrow" vs "Arial" with condensed width).
