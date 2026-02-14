@@ -4,7 +4,7 @@ from justmytype.core import FontRegistry, get_default_registry
 from justmytype.packs.factory import create_system_font_pack
 from justmytype.types import FontInfo, FontPack
 
-__version__ = "0.1.0"
+__version__ = "0.2.0.dev0"
 
 __all__ = [
     "FontInfo",
