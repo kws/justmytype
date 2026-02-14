@@ -73,6 +73,9 @@ Do not write a monolithic `SystemFontPack` with `if/else` chains.
     * `src/justmytype/`
     * `src/justmytype/packs/` (Built-in system packs go here)
     * `src/justmytype/core.py` (Registry logic)
+* **Build System:**
+    * **PEP 621 Compliance:** The project MUST use PEP 621 format for `pyproject.toml` metadata, regardless of build backend (Poetry, hatchling, setuptools). This ensures compatibility and future flexibility if the build system needs to change.
+    * **Current:** Using Poetry as build backend, but all project metadata follows PEP 621 standard in `[project]` section.
 
 ---
 
