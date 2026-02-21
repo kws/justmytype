@@ -26,7 +26,13 @@ class TestCLICommands:
         exit_code = cmd_list(args)
         assert exit_code == 0
         captured = capsys.readouterr()
-        assert len(captured.out) > 0  # Should have some output
+        lines = captured.out.strip().split("\n")
+        assert (
+            len(lines) >= 2
+        ), "list output should have header and separator (or header + separator + message)"
+        assert (
+            "Family" in lines[0] and " | " in lines[0]
+        ), "list output should be a table with Family header"
 
     def test_cmd_list_json(self, capsys: pytest.CaptureFixture[str]) -> None:
         """Test list command with JSON output."""
@@ -43,7 +49,10 @@ class TestCLICommands:
         output = json.loads(captured.out)
         assert "families" in output
         assert "count" in output
+        assert "family_details" in output
         assert isinstance(output["families"], list)
+        assert isinstance(output["family_details"], list)
+        assert len(output["family_details"]) == len(output["families"])
 
     def test_cmd_find_success(self, capsys: pytest.CaptureFixture[str]) -> None:
         """Test find command when font exists."""
@@ -66,7 +75,7 @@ class TestCLICommands:
         exit_code = cmd_find(args)
         assert exit_code == 0
         captured = capsys.readouterr()
-        assert "Found:" in captured.out
+        assert "Family:" in captured.out
 
     def test_cmd_find_not_found(self, capsys: pytest.CaptureFixture[str]) -> None:
         """Test find command when font doesn't exist (should return None, no fallback)."""
@@ -195,6 +204,8 @@ class TestCLICommands:
         assert exit_code == 0
         captured = capsys.readouterr()
         assert "Priority" in captured.out or "priority" in captured.out.lower()
+        # Licenses line shown when pack has manifest with licenses
+        assert "Entry point" in captured.out or "entry" in captured.out.lower()
 
     def test_cmd_packs_json(self, capsys: pytest.CaptureFixture[str]) -> None:
         """Test packs command with JSON output."""
