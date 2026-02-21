@@ -207,3 +207,60 @@ def test_font_registry_blocklist_system_fonts() -> None:
 
     # System fonts should be blocked, but discovery should still work
     assert registry._discovered is True
+
+
+def test_get_pack_name_for_font(
+    temp_dir: Path, empty_font_registry: FontRegistry
+) -> None:
+    """Test get_pack_name_for_font returns pack name for a discovered font."""
+    font_file = temp_dir / "test.ttf"
+    font_file.touch()
+
+    with patch("justmytype.core.parse_font_file") as mock_parse:
+        mock_parse.return_value = create_test_font_info(font_file, "Test Font")
+        with patch("justmytype.core.find_font_files") as mock_find:
+            mock_find.return_value = [font_file]
+            pack = MockFontPack([temp_dir], priority=100, name="my-pack")
+            with patch.object(
+                empty_font_registry,
+                "_get_entry_points",
+                return_value=[("my-pack", pack)],
+            ):
+                empty_font_registry.discover()
+
+    font_info = empty_font_registry.find_font("Test Font")
+    assert font_info is not None
+    assert empty_font_registry.get_pack_name_for_font(font_info.path) == "my-pack"
+    assert empty_font_registry.get_pack_name_for_font(Path("/nonexistent.ttf")) is None
+
+
+def test_get_pack_metadata_for_font(
+    temp_dir: Path, empty_font_registry: FontRegistry
+) -> None:
+    """Test get_pack_metadata_for_font returns pack name and optional manifest fields."""
+    font_file = temp_dir / "test.ttf"
+    font_file.touch()
+
+    with patch("justmytype.core.parse_font_file") as mock_parse:
+        mock_parse.return_value = create_test_font_info(font_file, "Test Font")
+        with patch("justmytype.core.find_font_files") as mock_find:
+            mock_find.return_value = [font_file]
+            pack = MockFontPack([temp_dir], priority=100, name="my-pack")
+            with patch.object(
+                empty_font_registry,
+                "_get_entry_points",
+                return_value=[("my-pack", pack)],
+            ):
+                empty_font_registry.discover()
+
+    font_info = empty_font_registry.find_font("Test Font")
+    assert font_info is not None
+    meta = empty_font_registry.get_pack_metadata_for_font(font_info.path)
+    assert meta is not None
+    assert meta["pack_name"] == "my-pack"
+    assert meta["description"] is None
+    assert meta["version"] is None
+    assert meta["licenses"] == []
+    assert (
+        empty_font_registry.get_pack_metadata_for_font(Path("/nonexistent.ttf")) is None
+    )

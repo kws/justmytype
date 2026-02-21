@@ -343,6 +343,61 @@ class FontRegistry:
                     seen.add(font_info.family)
                     yield font_info.family
 
+    def get_pack_name_for_font(self, path: Path) -> str | None:
+        """Return the pack name that provided the font at the given path.
+
+        Must be called after discovery (e.g. after find_font or discover).
+        Paths are matched as stored; resolution is attempted for robustness.
+
+        Args:
+            path: Path to the font file.
+
+        Returns:
+            Pack name (e.g. "justmytype-western-core", "system-fonts"), or None
+            if the path is not in the registry.
+        """
+        self.discover()
+        path = Path(path)
+        return self._font_pack_names.get(path) or self._font_pack_names.get(
+            path.resolve() if path.exists() else path
+        )
+
+    def get_pack_metadata_for_font(self, path: Path) -> dict[str, Any] | None:
+        """Return pack-level metadata for the font at the given path.
+
+        Includes pack name and, when a pack manifest exists, description,
+        version, and license summary. Use for CLI display (find, info, list).
+
+        Must be called after discovery.
+
+        Args:
+            path: Path to the font file.
+
+        Returns:
+            Dict with keys: pack_name (str), description (str | None),
+            version (str | None), licenses (list of dicts with spdx/path).
+            None if the path is not in the registry.
+        """
+        pack_name = self.get_pack_name_for_font(path)
+        if pack_name is None:
+            return None
+        out: dict[str, Any] = {
+            "pack_name": pack_name,
+            "description": None,
+            "version": None,
+            "licenses": [],
+        }
+        for p in self.list_packs():
+            if p.get("name") == pack_name:
+                manifest = p.get("manifest")
+                if isinstance(manifest, dict):
+                    pack_info = manifest.get("pack") or {}
+                    out["description"] = pack_info.get("description")
+                    out["version"] = pack_info.get("version")
+                    out["licenses"] = list(manifest.get("licenses") or [])
+                break
+        return out
+
     def get_font_path(
         self,
         family: str,
