@@ -98,24 +98,34 @@ registry = FontRegistry(blocklist={"system-fonts"})
 
 JustMyType includes a CLI for discovering and inspecting fonts from the command line.
 
+### Find vs Info
+
+- **`find`** — Resolves a single font (best match for family/weight/style/width). Use it when you need a path or a quick answer: one font file, with pack and license when available.
+- **`info`** — Rich view of a font family: pack metadata (version, description, licenses) and all variants. Use it when you want to see where the family comes from and what styles exist.
+
+### Family names
+
+Matching is by **exact family name** (case-insensitive). Use the name as it appears in the font, not a shortened or partial form. For example, use `"Noto Sans"` (from `justmytype list`), not `"noto"` or `"notosans"`.
+
 ### List All Fonts
 
 ```bash
-# List all available font families
+# List families with pack and license (family | pack | license)
 justmytype list
 
 # Sort by number of variants
 justmytype list --sort count
 
-# Output as JSON
+# Output as JSON (includes family_details with pack and licenses)
 justmytype list --json
 ```
 
 ### Find a Font
 
 ```bash
-# Find a font by family name
+# Resolve one font by family name; shows path, pack, license
 justmytype find "Roboto"
+justmytype find "Noto Sans"
 
 # Find with specific weight and style
 justmytype find "Roboto" --weight 400 --style normal
@@ -128,10 +138,11 @@ justmytype find "Roboto" --json
 ### Show Font Information
 
 ```bash
-# Show information about a font family
+# Rich family view: pack metadata and default variant
 justmytype info "Roboto"
+justmytype info "Noto Sans"
 
-# Show all variants of a font
+# Show all variants of the font
 justmytype info "Roboto" --all-variants
 
 # Output as JSON
@@ -141,13 +152,13 @@ justmytype info "Roboto" --json
 ### List Font Packs
 
 ```bash
-# List registered font packs
+# List registered font packs (names only)
 justmytype packs
 
-# Show detailed pack information
+# Show description, version, and licenses
 justmytype packs --verbose
 
-# Output as JSON
+# Output as JSON (includes manifest when present)
 justmytype packs --json
 ```
 
@@ -255,4 +266,3 @@ MIT License - see LICENSE file for details.
 ## Contributing
 
 Contributions are welcome! Please read the architecture documentation in `docs/architecture.md` and follow the project philosophy outlined in `AGENTS.md`.
-
