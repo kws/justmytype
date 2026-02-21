@@ -394,6 +394,16 @@ def main() -> int:
         default="name",
         help="Sort order (default: name)",
     )
+    list_parser.add_argument(
+        "--blocklist",
+        type=str,
+        help="Comma-separated list of font pack names to block",
+    )
+    list_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output in JSON format",
+    )
 
     # find command
     find_parser = subparsers.add_parser(
@@ -419,6 +429,16 @@ def main() -> int:
         "--width",
         help="Font width (e.g., normal, condensed, expanded)",
     )
+    find_parser.add_argument(
+        "--blocklist",
+        type=str,
+        help="Comma-separated list of font pack names to block",
+    )
+    find_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output in JSON format",
+    )
 
     # info command
     info_parser = subparsers.add_parser(
@@ -434,6 +454,16 @@ def main() -> int:
         action="store_true",
         help="Show all variants of the font",
     )
+    info_parser.add_argument(
+        "--blocklist",
+        type=str,
+        help="Comma-separated list of font pack names to block",
+    )
+    info_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output in JSON format",
+    )
 
     # packs command
     packs_parser = subparsers.add_parser(
@@ -444,6 +474,16 @@ def main() -> int:
         "--verbose",
         action="store_true",
         help="Show detailed pack information",
+    )
+    packs_parser.add_argument(
+        "--blocklist",
+        type=str,
+        help="Comma-separated list of font pack names to block",
+    )
+    packs_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output in JSON format",
     )
 
     try:
