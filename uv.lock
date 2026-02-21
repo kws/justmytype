@@ -259,6 +259,7 @@ pillow = [
 [package.dev-dependencies]
 dev = [
     { name = "coverage" },
+    { name = "justmytype-western-core" },
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "pytest" },
@@ -276,11 +277,23 @@ provides-extras = ["pillow"]
 [package.metadata.requires-dev]
 dev = [
     { name = "coverage", specifier = ">=7.0.0" },
+    { name = "justmytype-western-core" },
     { name = "mypy", specifier = ">=1.0.0" },
     { name = "pre-commit", specifier = ">=3.0.0" },
     { name = "pytest", specifier = ">=7.0.0" },
     { name = "pytest-cov", specifier = ">=4.0.0" },
     { name = "ruff", specifier = ">=0.1.0" },
+]
+
+[[package]]
+name = "justmytype-western-core"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "justmytype" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b0/1f/97c650425954fa1c4319a9a7d7ea4d81e175aa7d5b0f6b38255edc1218ae/justmytype_western_core-0.1.0-py3-none-any.whl", hash = "sha256:632e7ef422e73b4a0435031238e00b91553871da9e7dc88e8ba8ff53b72c8e7e", size = 9672754, upload-time = "2026-02-21T12:49:12.092Z" },
 ]
 
 [[package]]
