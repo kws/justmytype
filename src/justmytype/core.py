@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import os
 from collections.abc import Iterator
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from justmytype.matcher import (
     calculate_distance,
@@ -99,6 +100,79 @@ class FontRegistry:
             except Exception:
                 # Skip invalid entry points
                 continue
+
+    @staticmethod
+    def _read_pack_manifest(font_dir: Path) -> dict[str, Any] | None:
+        """Read pack_manifest.json from a font directory if present (convention-based).
+
+        Args:
+            font_dir: A directory returned by a pack's get_font_directories().
+
+        Returns:
+            Parsed manifest dict, or None if file missing or invalid.
+        """
+        manifest_path = font_dir / "pack_manifest.json"
+        if not manifest_path.is_file():
+            return None
+        try:
+            with open(manifest_path, encoding="utf-8") as f:
+                return json.load(f)
+        except (OSError, json.JSONDecodeError):
+            return None
+
+    def list_packs(self) -> list[dict[str, Any]]:
+        """List registered font packs with optional manifest metadata.
+
+        Does not run full discovery. For each pack, optionally reads
+        pack_manifest.json from its font directories (convention-based).
+        Blocklist is respected.
+
+        Returns:
+            List of dicts with keys: name, priority, entry_point, manifest (optional).
+        """
+        result: list[dict[str, Any]] = []
+
+        if "system-fonts" not in self._blocklist:
+            try:
+                system_pack = create_system_font_pack()
+                result.append(
+                    {
+                        "name": system_pack.get_name(),
+                        "priority": system_pack.get_priority(),
+                        "entry_point": "system-fonts",
+                        "manifest": None,
+                    }
+                )
+            except NotImplementedError:
+                pass
+
+        for pack_name, pack in self._get_entry_points():
+            if pack_name in self._blocklist:
+                continue
+            try:
+                dirs = pack.get_font_directories()
+                priority = pack.get_priority()
+                name = pack.get_name()
+                manifest: dict[str, Any] | None = None
+                for dir_path in dirs:
+                    path = Path(dir_path) if isinstance(dir_path, str) else dir_path
+                    if path.exists():
+                        manifest = self._read_pack_manifest(path)
+                        if manifest is not None:
+                            break
+                result.append(
+                    {
+                        "name": name,
+                        "priority": priority,
+                        "entry_point": pack_name,
+                        "manifest": manifest,
+                    }
+                )
+            except Exception:
+                continue
+
+        result.sort(key=lambda p: p["priority"], reverse=True)
+        return result
 
     def discover(self) -> None:
         """Discover fonts from all registered packs (high-priority first).

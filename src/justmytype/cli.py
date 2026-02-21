@@ -223,7 +223,7 @@ def cmd_info(args: argparse.Namespace) -> int:
 
 
 def cmd_packs(args: argparse.Namespace) -> int:
-    """List registered font packs.
+    """List registered font packs (with optional manifest metadata).
 
     Args:
         args: Parsed command-line arguments.
@@ -232,56 +232,10 @@ def cmd_packs(args: argparse.Namespace) -> int:
         Exit code (0 for success).
     """
     registry = _get_registry(blocklist=args.blocklist)
-    registry.discover()
-
-    # Get font packs from entry points
-    packs: list[dict[str, str | int | list[str]]] = []
-    try:
-        from importlib.metadata import entry_points
-    except ImportError:
-        try:
-            import importlib_metadata
-
-            entry_points = importlib_metadata.entry_points
-        except ImportError:
-            entry_points = lambda group: []  # noqa: E731
-
-    eps = entry_points(group="justmytype.packs")
-    for ep in eps:
-        try:
-            factory = ep.load()
-            pack = factory()
-            if hasattr(pack, "get_name") and hasattr(pack, "get_priority"):
-                packs.append(
-                    {
-                        "name": pack.get_name(),
-                        "priority": pack.get_priority(),
-                        "entry_point": ep.name,
-                    }
-                )
-        except Exception:
-            continue
-
-    # Add system font pack if not blocked
-    if "system-fonts" not in (args.blocklist or set()):
-        try:
-            from justmytype.packs.factory import create_system_font_pack
-
-            system_pack = create_system_font_pack()
-            packs.append(
-                {
-                    "name": system_pack.get_name(),
-                    "priority": system_pack.get_priority(),
-                    "entry_point": "system-fonts",
-                }
-            )
-        except NotImplementedError:
-            pass
-
-    # Sort by priority (highest first)
-    packs.sort(key=lambda p: p["priority"], reverse=True)
+    packs = registry.list_packs()
 
     if args.json:
+        # Include manifest when present for each pack
         print(json.dumps({"packs": packs, "count": len(packs)}, indent=2))
     else:
         if args.verbose:
@@ -290,6 +244,13 @@ def cmd_packs(args: argparse.Namespace) -> int:
                 print(f"  {pack['name']}")
                 print(f"    Priority: {pack['priority']}")
                 print(f"    Entry point: {pack['entry_point']}")
+                manifest = pack.get("manifest")
+                if manifest:
+                    pack_info = manifest.get("pack", {})
+                    if pack_info.get("version"):
+                        print(f"    Version: {pack_info['version']}")
+                    if pack_info.get("description"):
+                        print(f"    Description: {pack_info['description']}")
         else:
             for pack in packs:
                 print(pack["name"])

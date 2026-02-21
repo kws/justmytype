@@ -351,6 +351,20 @@ def get_font_pack_directories() -> list[tuple[Path, int, str]]:
     return packs
 ```
 
+### 4.6 Font Pack Manifest (Optional)
+
+Font packs may optionally ship a **pack manifest** file (`pack_manifest.json`) alongside their font files. The manifest provides:
+
+- **Reproducibility**: Pinned upstream ref (e.g. git commit SHA) and archive checksum.
+- **Provenance**: Which families are included and which licenses apply.
+- **Optional runtime metadata**: Version, upstream ref, and family list so that tools (e.g. a "list packs" feature) can expose pack info without scanning font files.
+
+The manifest is **optional**. Font discovery and resolution remain driven by scanning the directories returned by `get_font_directories()`; the registry does not require a manifest. When present, the registry (or CLI) may optionally read it to enrich pack metadata.
+
+**Convention:** The registry looks for a file named `pack_manifest.json` in each directory returned by a pack's `get_font_directories()`. If found and valid JSON, it is attached to that pack's metadata (e.g. in `list_packs()` or the `justmytype packs --verbose` / `--json` output). Packs do not need to implement any extra method; shipping the file in the pack's font directory is sufficient.
+
+The full schema, rationale, and lifecycle are documented in [manifest.md](manifest.md).
+
 ## 5. Font Metadata Parsing
 
 Font metadata (family name, weight, style) must be extracted from font files to enable intelligent matching.
