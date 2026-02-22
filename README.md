@@ -172,9 +172,22 @@ justmytype find "Roboto" --blocklist "system-fonts,broken-pack"
 
 ## Creating Font Packs
 
-Font packs can be registered via Python EntryPoints. This allows applications to bundle fonts or third-party packages to provide fonts.
+Creating a font pack involves: (1) **layout** — organizing font files in a directory (or directories) the pack will expose, and optionally adding `pack_manifest.json`; (2) **building** (optional) — using tools such as pack-tools to fetch and assemble families from upstream; (3) **registering** — exposing the pack via the `justmytype.packs` entry point so applications or third-party packages can provide fonts.
+
+### Pack layout and file organization
+
+The entry point factory returns **one or more directory paths** (font directories). The registry scans each font directory for font files (e.g. `.ttf`, `.otf`).
+
+- **Where to put files:** Put font files and optionally `pack_manifest.json` in the directory (or directories) you return. Two common layouts: (a) a Python package that *is* the font directory (e.g. `myapp.fonts` → `myapp/fonts/`); or (b) a package with a `fonts/` subdirectory (e.g. `my_pack/fonts/`). Ensure your package build (e.g. `pyproject.toml` / hatchling) includes those files in the wheel.
+- **Optional manifest:** If present, `pack_manifest.json` in a font directory is read by JustMyType for pack metadata (e.g. `justmytype packs --verbose`). Not required for discovery.
+
+### Building packs with pack-tools
+
+For a standard workflow to **build** packs from selected families (e.g. from [Google Fonts](https://github.com/google/fonts)), use **[justmytype-pack-tools](https://github.com/kws/justmytype-essentials/tree/main/pack-tools)** from the [justmytype-essentials](https://github.com/kws/justmytype-essentials) repo. It lets you configure families and upstream in `upstream.toml`, **fetch** families from the upstream repo into a cache, **build** into the pack's font directory (with license resolution and `pack_manifest.json`), and optionally run **manifest** only when fonts are already in place. Usable from the essentials mono-repo or standalone; see the [pack-tools README](https://github.com/kws/justmytype-essentials/blob/main/pack-tools/README.md) for usage and `upstream.toml` schema.
 
 ### First-Party Font Pack (Application's Own Fonts)
+
+Register a first-party font pack so your application's bundled fonts are discovered. The factory must return the font directory (or directories) that contain the font files.
 
 ```python
 # myapp/fonts.py
@@ -182,7 +195,7 @@ from pathlib import Path
 from importlib.resources import files
 
 def get_font_directories():
-    """Entry point factory for application's bundled fonts."""
+    """Entry point factory: returns font directory paths for this pack."""
     package = files("myapp.fonts")
     return [Path(str(package))]
 ```
@@ -195,13 +208,15 @@ def get_font_directories():
 
 ### Third-Party Font Pack
 
+Register a third-party font pack so the package can provide fonts to any application using JustMyType. The factory must return the font directory (or directories) that contain the font files.
+
 ```python
 # my_font_pack/__init__.py
 from pathlib import Path
 from importlib.resources import files
 
 def get_font_directories():
-    """Entry point factory for font pack."""
+    """Entry point factory: returns font directory paths for this font pack."""
     package = files("my_font_pack.fonts")
     return [Path(str(package))]
 ```
