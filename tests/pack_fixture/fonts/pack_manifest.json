@@ -1,0 +1,33 @@
+{
+  "manifest_version": "1.0",
+  "pack": {"name": "test-pack", "version": "0.1.0"},
+  "fonts": [
+    {
+      "path": "fixture.ttf",
+      "sha256": "2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881",
+      "family": "Inter",
+      "style": "normal",
+      "weight": 400,
+      "width": "normal",
+      "postscript_name": "Inter-Regular"
+    },
+    {
+      "path": "fixture.ttf",
+      "sha256": "2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881",
+      "family": "Inter",
+      "style": "italic",
+      "weight": 400,
+      "width": "normal",
+      "postscript_name": "Inter-Italic"
+    },
+    {
+      "path": "fixture.ttf",
+      "sha256": "2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881",
+      "family": "Test Family",
+      "style": "normal",
+      "weight": 700,
+      "width": "normal",
+      "postscript_name": "TestFamily-Bold"
+    }
+  ]
+}
