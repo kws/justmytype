@@ -1,5 +1,8 @@
 # JustMyType
 
+[![CI](https://github.com/kws/justmytype/actions/workflows/ci.yml/badge.svg)](https://github.com/kws/justmytype/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/kws/justmytype/graph/badge.svg)](https://codecov.io/gh/kws/justmytype)
+
 A precise, lightweight, and extensible font discovery library for Python. JustMyType provides a robust "Font Atlas" for the Python ecosystem—a definitive map of every font available to an application, whether installed on the system or bundled in a Python package.
 
 ## Features
