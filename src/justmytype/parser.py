@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 from fontTools.ttLib import TTFont
 
@@ -88,6 +89,64 @@ def find_font_files(directory: Path) -> Iterator[Path]:
         return
 
 
+def parse_font_metadata(path: Path) -> dict[str, Any] | None:
+    """Extract metadata from a font file using fonttools.
+
+    Single source of truth for reading name table and OS/2. Used by
+    parse_font_file (registry path) and by pack-tools manifest generation.
+
+    Args:
+        path: Path to the font file.
+
+    Returns:
+        Dict with keys family, style, weight, width, postscript_name, variant;
+        or None if parsing fails.
+    """
+    try:
+        font = TTFont(str(path))
+        name_table = font.get("name")
+        if name_table is None:
+            return None
+
+        is_variable_font = font.get("fvar") is not None
+        if is_variable_font:
+            family = name_table.getDebugName(16)
+            if not family:
+                family = name_table.getDebugName(1)
+                if family:
+                    family = re.sub(r"\s+\d+(\.\d+)?pt\s*$", "", family).strip()
+        else:
+            family = name_table.getDebugName(1)
+
+        if not family:
+            return None
+
+        postscript_name = name_table.getDebugName(6)
+        variant = name_table.getDebugName(2)  # Subfamily (name ID 2)
+
+        os2 = font.get("OS/2")
+        weight: int | None = None
+        style = "normal"
+        width: str | None = None
+        if os2 is not None:
+            weight = os2.usWeightClass if hasattr(os2, "usWeightClass") else None
+            if hasattr(os2, "fsSelection") and os2.fsSelection & 0x01:
+                style = "italic"
+            if hasattr(os2, "usWidthClass"):
+                width = WIDTH_MAP.get(os2.usWidthClass, "normal")
+
+        return {
+            "family": family,
+            "style": style,
+            "weight": weight,
+            "width": width,
+            "postscript_name": postscript_name,
+            "variant": variant,
+        }
+    except Exception:
+        return None
+
+
 def parse_font_file(path: Path) -> FontInfo | None:
     """Parse font file and extract metadata using fonttools.
 
@@ -101,69 +160,7 @@ def parse_font_file(path: Path) -> FontInfo | None:
     Returns:
         FontInfo object with parsed metadata, or None if parsing fails.
     """
-    try:
-        font = TTFont(str(path))
-
-        # Extract family name from name table (name ID 1 = Family name)
-        name_table = font.get("name")
-        if name_table is None:
-            return None
-
-        # Check if this is a variable font (has 'fvar' table)
-        is_variable_font = font.get("fvar") is not None
-
-        # For variable fonts, prefer nameID 16 (Typographic Family Name)
-        # which contains the base family name without optical size suffixes
-        if is_variable_font:
-            # Try nameID 16 first (Typographic Family Name)
-            family = name_table.getDebugName(16)
-            if not family:
-                # Fallback to nameID 1 and strip optical size patterns
-                family = name_table.getDebugName(1)
-                if family:
-                    # Strip optical size patterns (e.g., " 9pt", " 10pt", " 12.5pt")
-                    # Pattern matches: optional whitespace, digits, optional decimal, "pt", optional trailing whitespace
-                    family = re.sub(r"\s+\d+(\.\d+)?pt\s*$", "", family).strip()
-        else:
-            # For non-variable fonts, use nameID 1 as before
-            family = name_table.getDebugName(1)
-
-        if not family:
-            return None
-
-        # Extract PostScript name (name ID 6)
-        postscript_name = name_table.getDebugName(6)
-
-        # Extract weight from OS/2 table
-        os2 = font.get("OS/2")
-        weight: int | None = None
-        style = "normal"
-        width: str | None = None
-
-        if os2 is not None:
-            # Extract weight (usWeightClass: 100-900)
-            weight = os2.usWeightClass if hasattr(os2, "usWeightClass") else None
-
-            # Extract style from fsSelection (bit 0 = italic)
-            if hasattr(os2, "fsSelection") and os2.fsSelection & 0x01:
-                style = "italic"
-
-            # Extract width/stretch from usWidthClass
-            if hasattr(os2, "usWidthClass"):
-                width = WIDTH_MAP.get(os2.usWidthClass, "normal")
-
-        # Extract variant from name table (name ID 2 = Subfamily)
-        variant = name_table.getDebugName(2)  # Subfamily name
-
-        return FontInfo(
-            path=path,
-            family=family,
-            weight=weight,
-            style=style,
-            width=width,
-            postscript_name=postscript_name,
-            variant=variant,
-        )
-    except Exception:
-        # Return None for any parsing errors (invalid font, corrupted file, etc.)
+    meta = parse_font_metadata(path)
+    if meta is None:
         return None
+    return FontInfo(path=path, **meta)

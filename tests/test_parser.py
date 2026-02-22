@@ -2,7 +2,9 @@
 
 from pathlib import Path
 
-from justmytype.parser import find_font_files, parse_font_file
+import pytest
+
+from justmytype.parser import find_font_files, parse_font_file, parse_font_metadata
 
 
 def test_find_font_files_empty_directory(temp_dir: Path) -> None:
@@ -92,3 +94,32 @@ def test_parse_font_file_empty_file(temp_dir: Path) -> None:
     result = parse_font_file(empty_file)
     # Should return None for empty/invalid fonts
     assert result is None
+
+
+def test_parse_font_metadata_returns_dict_with_variant() -> None:
+    """parse_font_metadata returns a dict including variant for a real font."""
+    fixture_path = Path(__file__).parent / "pack_fixture" / "fonts" / "fixture.ttf"
+    if not fixture_path.exists():
+        pytest.skip("pack_fixture/fonts/fixture.ttf not found")
+    meta = parse_font_metadata(fixture_path)
+    if meta is None:
+        pytest.skip("fixture is not a parseable font (e.g. placeholder)")
+    assert "family" in meta
+    assert "style" in meta
+    assert "weight" in meta
+    assert "width" in meta
+    assert "postscript_name" in meta
+    assert "variant" in meta
+    assert meta.get("variant") is not None  # e.g. "Regular"
+
+
+def test_parse_font_file_and_parse_font_metadata_agree_on_variant() -> None:
+    """parse_font_file and parse_font_metadata return the same variant for the same path."""
+    fixture_path = Path(__file__).parent / "pack_fixture" / "fonts" / "fixture.ttf"
+    if not fixture_path.exists():
+        pytest.skip("pack_fixture/fonts/fixture.ttf not found")
+    meta = parse_font_metadata(fixture_path)
+    font_info = parse_font_file(fixture_path)
+    if meta is None or font_info is None:
+        pytest.skip("fixture is not a parseable font (e.g. placeholder)")
+    assert font_info.variant == meta.get("variant")
