@@ -1,6 +1,6 @@
 [project]
 name = "justmytype"
-version = "0.4.0rc1"
+version = "0.4.0rc2"
 description = "Cross-platform font discovery and resolution library for Python"
 authors = [
     {name = "Kaj Siebert", email = "kaj@k-si.com"}
