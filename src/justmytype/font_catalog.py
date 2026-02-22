@@ -1,20 +1,43 @@
-"""Font catalog: manifest-backed FontAsset and create_catalog for pack-based font access."""
+"""Font catalog: manifest-backed FontInfo and create_catalog for pack-based font access."""
 
 from __future__ import annotations
 
 import hashlib
 import json
 import re
-from dataclasses import dataclass, field
 from importlib.resources import as_file, files
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-if TYPE_CHECKING:
-    from PIL import ImageFont
+from justmytype.types import FontInfo
 
-# Cache for as_file() context managers so path() stays valid for zipped packages
+# Cache for as_file() context managers so resolved paths stay valid for zipped packages
 _path_cache: dict[tuple[str, str], tuple[Path, Any]] = {}
+
+
+def _resolve_resource_path(package: str, relative_path: str) -> Path:
+    """Resolve a package-relative font path to a filesystem Path.
+
+    Uses importlib.resources; for zipped packages the resource is extracted
+    to a temporary location (cached for the process).
+    """
+    key = (package, relative_path)
+    if key in _path_cache:
+        return _path_cache[key][0]
+    traversable = files(package) / "fonts" / relative_path
+    if not traversable.is_file():
+        raise FileNotFoundError(
+            f"Font resource not found: fonts/{relative_path} in {package}"
+        )
+    try:
+        cm = as_file(traversable)
+        p = cm.__enter__()
+        _path_cache[key] = (Path(p), cm)
+        return Path(p)
+    except Exception:
+        raise FileNotFoundError(
+            f"Could not resolve font: fonts/{relative_path} in {package}"
+        ) from None
 
 
 def _normalize_family_name(family: str) -> str:
@@ -44,79 +67,19 @@ def _normalize_family_with_collisions(family: str, seen: dict[str, str]) -> str:
     return candidate
 
 
-@dataclass(frozen=True, slots=True)
-class FontAsset:
-    """Manifest-backed font asset; path and load resolved from package resources."""
-
-    family: str
-    style: str
-    weight: int | None
-    width: str | None
-    postscript_name: str | None
-    sha256: str
-    relative_path: str
-    _package: str = field(repr=False)
-
-    def path(self) -> Path:
-        """Resolve the font file to a filesystem Path.
-
-        Uses importlib.resources; for zipped packages the resource is extracted
-        to a temporary location (cached for the process).
-        """
-        key = (self._package, self.relative_path)
-        if key in _path_cache:
-            return _path_cache[key][0]
-        traversable = files(self._package) / "fonts" / self.relative_path
-        if not traversable.is_file():
-            raise FileNotFoundError(
-                f"Font resource not found: fonts/{self.relative_path} in {self._package}"
-            )
-        try:
-            cm = as_file(traversable)
-            p = cm.__enter__()
-            _path_cache[key] = (Path(p), cm)
-            return Path(p)
-        except Exception:
-            raise FileNotFoundError(
-                f"Could not resolve font: fonts/{self.relative_path} in {self._package}"
-            ) from None
-
-    def load(self, size: int, **kwargs: Any) -> ImageFont.FreeTypeFont:
-        """Load this font as a PIL ImageFont.
-
-        Imports PIL only when called. Raises ImportError if Pillow is not installed.
-        """
-        try:
-            from PIL import ImageFont
-        except ImportError as e:
-            raise ImportError(
-                "Pillow (PIL) is required to load fonts. Install with: pip install Pillow"
-            ) from e
-        return ImageFont.truetype(str(self.path()), size=size, **kwargs)
-
-    def verify(self) -> bool:
-        """Return True if the resolved file's SHA-256 matches the manifest."""
-        p = self.path()
-        h = hashlib.sha256()
-        with open(p, "rb") as f:
-            for chunk in iter(lambda: f.read(65536), b""):
-                h.update(chunk)
-        return h.hexdigest() == self.sha256
-
-
 class FontFamily:
     """Namespace for one font family: .regular, .italic, .all, .w400, etc."""
 
     __slots__ = ("_assets", "_by_weight")
 
-    def __init__(self, assets: tuple[FontAsset, ...]) -> None:
+    def __init__(self, assets: tuple[FontInfo, ...]) -> None:
         self._assets = assets
-        self._by_weight: dict[int, FontAsset] = {}
+        self._by_weight: dict[int, FontInfo] = {}
         for a in assets:
             if a.weight is not None:
                 self._by_weight.setdefault(a.weight, a)
 
-    def _best_for_style(self, style: str) -> FontAsset | None:
+    def _best_for_style(self, style: str) -> FontInfo | None:
         """First asset for style, preferring weight 400."""
         for a in self._assets:
             if a.style == style and a.weight == 400:
@@ -127,17 +90,17 @@ class FontFamily:
         return None
 
     @property
-    def regular(self) -> FontAsset | None:
+    def regular(self) -> FontInfo | None:
         """First normal-style asset, preferring weight 400."""
         return self._best_for_style("normal")
 
     @property
-    def italic(self) -> FontAsset | None:
+    def italic(self) -> FontInfo | None:
         """First italic-style asset, preferring weight 400."""
         return self._best_for_style("italic")
 
     @property
-    def all(self) -> tuple[FontAsset, ...]:
+    def all(self) -> tuple[FontInfo, ...]:
         """All assets for this family."""
         return self._assets
 
@@ -145,7 +108,7 @@ class FontFamily:
         name = self._assets[0].family if self._assets else "?"
         return f"FontFamily({name!r}, {len(self._assets)} assets)"
 
-    def __getattr__(self, name: str) -> FontAsset:
+    def __getattr__(self, name: str) -> FontInfo:
         if name.startswith("w") and name[1:].isdigit():
             w = int(name[1:])
             if w in self._by_weight:
@@ -156,14 +119,14 @@ class FontFamily:
 
 
 class FontCatalog:
-    """Catalog of FontAssets from a pack manifest; family namespaces via __getattr__."""
+    """Catalog of FontInfo from a pack manifest; family namespaces via __getattr__."""
 
     __slots__ = ("_assets", "_by_postscript", "_families", "_by_normalized")
 
     def __init__(
         self,
-        assets: tuple[FontAsset, ...],
-        by_postscript: dict[str, FontAsset],
+        assets: tuple[FontInfo, ...],
+        by_postscript: dict[str, FontInfo],
         families: tuple[str, ...],
         by_normalized: dict[str, FontFamily],
     ) -> None:
@@ -173,13 +136,13 @@ class FontCatalog:
         self._by_normalized = by_normalized
 
     @property
-    def all_assets(self) -> tuple[FontAsset, ...]:
+    def all_assets(self) -> tuple[FontInfo, ...]:
         """All font assets in deterministic order."""
         return self._assets
 
     @property
-    def by_postscript(self) -> dict[str, FontAsset]:
-        """Map PostScript name to FontAsset (only entries with postscript_name)."""
+    def by_postscript(self) -> dict[str, FontInfo]:
+        """Map PostScript name to FontInfo (only entries with postscript_name)."""
         return self._by_postscript
 
     def list_families(self) -> tuple[str, ...]:
@@ -198,8 +161,8 @@ class FontCatalog:
         style: str | None = None,
         weight: int | None = None,
         postscript_name: str | None = None,
-    ) -> FontAsset | None:
-        """Return one FontAsset matching the criteria; exact family match required."""
+    ) -> FontInfo | None:
+        """Return one FontInfo matching the criteria; exact family match required."""
         if postscript_name is not None and postscript_name in self._by_postscript:
             return self._by_postscript[postscript_name]
         candidates = [a for a in self._assets if a.family == family]
@@ -211,12 +174,12 @@ class FontCatalog:
             candidates = [a for a in candidates if a.weight == weight]
         if not candidates:
             return None
-        # Deterministic: prefer normal, then weight 400
+        # Deterministic: prefer normal, then weight 400, then path
         candidates.sort(
             key=lambda a: (
                 0 if a.style == "normal" else 1,
                 (a.weight if a.weight is not None else -1),
-                a.relative_path,
+                str(a.path),
             )
         )
         return candidates[0]
@@ -252,23 +215,25 @@ def create_catalog(package: str) -> FontCatalog:
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid pack_manifest.json in {package}") from e
     font_entries = manifest.get("fonts") or []
-    assets_list: list[FontAsset] = []
+    assets_list: list[FontInfo] = []
     for entry in font_entries:
         if not isinstance(entry, dict):
             continue
-        path_str = entry.get("path") or ""
+        path_str = (entry.get("path") or "").replace("\\", "/")
         if not path_str:
             continue
+        resolved_path = _resolve_resource_path(package, path_str)
+        sha256_val = entry.get("sha256")
         assets_list.append(
-            FontAsset(
+            FontInfo(
+                path=resolved_path,
                 family=entry.get("family") or "",
                 style=entry.get("style") or "normal",
                 weight=entry.get("weight"),
                 width=entry.get("width"),
                 postscript_name=entry.get("postscript_name"),
-                sha256=entry.get("sha256") or "",
-                relative_path=path_str.replace("\\", "/"),
-                _package=package,
+                variant=entry.get("variant"),
+                sha256=sha256_val if sha256_val else None,
             )
         )
     # Deterministic order
@@ -278,11 +243,11 @@ def create_catalog(package: str) -> FontCatalog:
             a.style,
             a.weight if a.weight is not None else -1,
             a.postscript_name or "",
-            a.relative_path,
+            str(a.path),
         )
     )
     assets = tuple(assets_list)
-    by_postscript: dict[str, FontAsset] = {}
+    by_postscript: dict[str, FontInfo] = {}
     for a in assets:
         if a.postscript_name:
             by_postscript[a.postscript_name] = a
@@ -295,7 +260,7 @@ def create_catalog(package: str) -> FontCatalog:
             families_list.append(a.family)
     families = tuple(families_list)
     # Family -> assets
-    by_family: dict[str, list[FontAsset]] = {}
+    by_family: dict[str, list[FontInfo]] = {}
     for a in assets:
         if a.family:
             by_family.setdefault(a.family, []).append(a)

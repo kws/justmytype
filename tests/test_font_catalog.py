@@ -1,4 +1,4 @@
-"""Tests for font_catalog: FontAsset, FontCatalog, create_catalog."""
+"""Tests for font_catalog: FontInfo, FontCatalog, create_catalog."""
 
 from __future__ import annotations
 
@@ -7,13 +7,13 @@ from pathlib import Path
 import pytest
 
 from justmytype.font_catalog import (
-    FontAsset,
     FontCatalog,
     FontFamily,
     _normalize_family_name,
     _normalize_family_with_collisions,
     create_catalog,
 )
+from justmytype.types import FontInfo
 
 PACK_FIXTURE = "tests.pack_fixture"
 
@@ -58,7 +58,7 @@ class TestCreateCatalog:
         catalog = create_catalog(PACK_FIXTURE)
         assets = catalog.all_assets
         assert len(assets) == 3
-        assert all(isinstance(a, FontAsset) for a in assets)
+        assert all(isinstance(a, FontInfo) for a in assets)
         families = [a.family for a in assets]
         assert families == ["Inter", "Inter", "Test Family"]
 
@@ -73,7 +73,7 @@ class TestCreateCatalog:
         assert "Inter-Regular" in by_ps
         assert "Inter-Italic" in by_ps
         assert "TestFamily-Bold" in by_ps
-        assert isinstance(by_ps["Inter-Regular"], FontAsset)
+        assert isinstance(by_ps["Inter-Regular"], FontInfo)
 
     def test_missing_manifest_raises(self) -> None:
         with pytest.raises(FileNotFoundError, match="pack_manifest.json"):
@@ -118,6 +118,16 @@ class TestFontCatalogFamilyNamespace:
         assert inter.regular.family == "Inter"
         assert inter.regular.style == "normal"
 
+    def test_catalog_passes_through_variant_from_manifest(self) -> None:
+        """When manifest includes variant, catalog-built FontInfo has it (same as registry path)."""
+        catalog = create_catalog(PACK_FIXTURE)
+        assert catalog.inter.regular is not None
+        assert catalog.inter.regular.variant == "Regular"
+        assert catalog.inter.italic is not None
+        assert catalog.inter.italic.variant == "Italic"
+        assert catalog.test_family.w700 is not None
+        assert catalog.test_family.w700.variant == "Bold"
+
     def test_family_italic(self) -> None:
         catalog = create_catalog(PACK_FIXTURE)
         assert catalog.inter.italic is not None
@@ -144,21 +154,21 @@ class TestFontCatalogFamilyNamespace:
             _ = catalog.test_family.w400
 
 
-class TestFontAssetPath:
-    """Test FontAsset.path()."""
+class TestFontInfoPath:
+    """Test FontInfo.path (attribute)."""
 
     def test_path_resolves_to_file(self) -> None:
         catalog = create_catalog(PACK_FIXTURE)
         asset = catalog.inter.regular
         assert asset is not None
-        path = asset.path()
+        path = asset.path
         assert isinstance(path, Path)
         assert path.exists()
         assert path.name == "fixture.ttf"
 
 
-class TestFontAssetVerify:
-    """Test FontAsset.verify()."""
+class TestFontInfoVerify:
+    """Test FontInfo.verify()."""
 
     def test_verify_returns_true_for_correct_sha256(self) -> None:
         catalog = create_catalog(PACK_FIXTURE)
@@ -167,8 +177,8 @@ class TestFontAssetVerify:
         assert asset.verify() is True
 
 
-class TestFontAssetLoad:
-    """Test FontAsset.load()."""
+class TestFontInfoLoad:
+    """Test FontInfo.load()."""
 
     def test_load_requires_pillow(self) -> None:
         catalog = create_catalog(PACK_FIXTURE)
@@ -198,10 +208,10 @@ class TestFontCatalogInvalidManifest:
 class TestExports:
     """Test that public API is importable from justmytype."""
 
-    def test_font_asset_from_top_level(self) -> None:
-        from justmytype import FontAsset
+    def test_font_info_from_top_level(self) -> None:
+        from justmytype import FontInfo
 
-        assert FontAsset is not None
+        assert FontInfo is not None
 
     def test_create_catalog_from_top_level(self) -> None:
         from justmytype import create_catalog

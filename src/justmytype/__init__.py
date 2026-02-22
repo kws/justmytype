@@ -3,7 +3,7 @@
 from importlib.metadata import PackageNotFoundError, version
 
 from justmytype.core import FontRegistry, get_default_registry
-from justmytype.font_catalog import FontAsset, create_catalog
+from justmytype.font_catalog import create_catalog
 from justmytype.packs.factory import create_system_font_pack
 from justmytype.types import FontInfo, FontPack
 
@@ -13,7 +13,6 @@ except PackageNotFoundError:
     __version__ = "0.0.0+unknown"
 
 __all__ = [
-    "FontAsset",
     "FontInfo",
     "FontPack",
     "FontRegistry",

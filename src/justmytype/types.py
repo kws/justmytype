@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 if TYPE_CHECKING:
     from PIL import ImageFont
@@ -69,7 +69,25 @@ class FontInfo:
     variant: str | None = None
     """Font variant (e.g., 'Regular', 'Bold', 'Italic', 'Bold Italic')."""
 
-    def load(self, size: int) -> ImageFont.FreeTypeFont | None:
+    sha256: str | None = None
+    """SHA-256 hash of the font file (for manifest-backed fonts); None if unknown."""
+
+    def verify(self) -> bool:
+        """Return True if no hash is stored, or if the file's SHA-256 matches sha256."""
+        if self.sha256 is None or not self.sha256:
+            return True
+        import hashlib
+
+        h = hashlib.sha256()
+        try:
+            with open(self.path, "rb") as f:
+                for chunk in iter(lambda: f.read(65536), b""):
+                    h.update(chunk)
+        except OSError:
+            return False
+        return h.hexdigest() == self.sha256
+
+    def load(self, size: int, **kwargs: Any) -> ImageFont.FreeTypeFont | None:
         """Load this font as a PIL ImageFont.
 
         This method imports PIL only when called, keeping JustMyType
@@ -87,7 +105,7 @@ class FontInfo:
         try:
             from PIL import ImageFont
 
-            return ImageFont.truetype(str(self.path), size=size)
+            return ImageFont.truetype(str(self.path), size=size, **kwargs)
         except ImportError as e:
             raise ImportError(
                 "Pillow (PIL) is required to load fonts. Install with: pip install Pillow"
